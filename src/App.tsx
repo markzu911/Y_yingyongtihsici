@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import ReactMarkdown from 'react-markdown';
-import { Loader2, Sparkles, Send, Copy, Check, Coins, User } from 'lucide-react';
+import { Loader2, Sparkles, Send, Copy, Check, User, Coins } from 'lucide-react';
 import { GoogleGenAI } from '@google/genai';
 
 const SYSTEM_INSTRUCTION = `你要扮演一位顶级的AI Prompt工程师。你的任务是专门并且仅仅为【电商图像生成类、商品视觉展示类、模特换装渲染类】的应用或Agent编写提示词。
@@ -55,12 +55,6 @@ const SYSTEM_INSTRUCTION = `你要扮演一位顶级的AI Prompt工程师。你�
 
 请根据用户的具体需求，构思高维度的角色设定、精确的可执行动作指令、生动的光影场景、明确的约束与输出标准。严格使用中文输出，直接返回生成的Prompt内容（使用统一规范的Markdown排版），不需要多余的问候语或解释。`;
 
-interface SaasUser {
-  name: string;
-  enterprise?: string;
-  integral: number;
-}
-
 export default function App() {
   const [idea, setIdea] = useState("");
   const [generatedPrompt, setGeneratedPrompt] = useState("");
@@ -69,48 +63,54 @@ export default function App() {
   const [isCopied, setIsCopied] = useState(false);
 
   // SaaS Integration State
-  const [userId, setUserId] = useState<string>("");
-  const [toolId, setToolId] = useState<string>("");
-  const [saasUser, setSaasUser] = useState<SaasUser | null>(null);
+  const [userId, setUserId] = useState<string | null>(null);
+  const [toolId, setToolId] = useState<string | null>(null);
+  const [userInfo, setUserInfo] = useState<{ name: string; integral: number } | null>(null);
 
+  // 1. Listen for postMessage Initialization
   useEffect(() => {
-    // 1. Initial Launch
-    const handleSaaSMessages = (event: MessageEvent) => {
-      const data = event.data;
+    const handleMessage = (event: MessageEvent) => {
+      const { data } = event;
       if (data && data.type === 'SAAS_INIT') {
-        const uId = data.userId && data.userId !== "null" && data.userId !== "undefined" ? data.userId : "";
-        const tId = data.toolId && data.toolId !== "null" && data.toolId !== "undefined" ? data.toolId : "";
+        const uId = data.userId === "null" || data.userId === "undefined" ? null : data.userId;
+        const tId = data.toolId === "null" || data.toolId === "undefined" ? null : data.toolId;
         
         setUserId(uId);
         setToolId(tId);
-        
-        if (data.context) setIdea(data.context);
-        
-        if (uId && tId) {
-          fetchLaunchInfo(uId, tId);
+
+        // Pre-fill idea based on logic: Context + Prompt keywords
+        let initialIdea = data.context || "";
+        if (Array.isArray(data.prompt) && data.prompt.length > 0) {
+          initialIdea += (initialIdea ? " " : "") + data.prompt.join(", ");
         }
+        if (initialIdea) setIdea(initialIdea);
       }
     };
 
-    window.addEventListener('message', handleSaaSMessages);
-    return () => window.removeEventListener('message', handleSaaSMessages);
+    window.addEventListener('message', handleMessage);
+    return () => window.removeEventListener('message', handleMessage);
   }, []);
 
-  const fetchLaunchInfo = async (uId: string, tId: string) => {
-    try {
-      const response = await fetch("/api/tool/launch", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId: uId, toolId: tId })
-      });
-      const result = await response.json();
-      if (result.success && result.data.user) {
-        setSaasUser(result.data.user);
+  // 2. Launch Interface - Fetch initial points
+  useEffect(() => {
+    const fetchUserInfo = async () => {
+      if (!userId || !toolId) return;
+      try {
+        const res = await fetch('/api/tool/launch', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userId, toolId })
+        });
+        const json = await res.json();
+        if (json.success) {
+          setUserInfo(json.data.user);
+        }
+      } catch (err) {
+        console.error("Launch point fetch failed:", err);
       }
-    } catch (err) {
-      console.error("SaaS Launch Error:", err);
-    }
-  };
+    };
+    fetchUserInfo();
+  }, [userId, toolId]);
 
   const handleGenerate = async () => {
     if (!idea.trim()) return;
@@ -121,23 +121,22 @@ export default function App() {
     setIsCopied(false);
 
     try {
-      // 2. Verification Step
+      // Step A: Verification (SaaS Flow)
       if (userId && toolId) {
-        const verifyRes = await fetch("/api/tool/verify", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
+        const verifyRes = await fetch('/api/tool/verify', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ userId, toolId })
         });
-        const verifyResult = await verifyRes.json();
-        
-        if (!verifyResult.success) {
-          setError(verifyResult.message || "积分不足，无法生成。");
+        const verifyJson = await verifyRes.json();
+        if (!verifyJson.success) {
+          setError(verifyJson.message || "积分不足，无法生成。");
           setIsLoading(false);
           return;
         }
       }
 
-      // 3. Gemini Generation (Original Logic)
+      // Step B: AI Generation (Existing Logic)
       const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
       const responseStream = await ai.models.generateContentStream({
         model: "gemini-3.1-pro-preview",
@@ -147,29 +146,29 @@ export default function App() {
         }
       });
       
-      let fullPrompt = "";
+      let finalPrompt = "";
       for await (const chunk of responseStream) {
-        const chunkText = chunk.text || "";
-        fullPrompt += chunkText;
-        setGeneratedPrompt((prev) => prev + chunkText);
+        const text = chunk.text || "";
+        finalPrompt += text;
+        setGeneratedPrompt((prev) => prev + text);
       }
 
-      // 4. Consumption Step
-      if (fullPrompt && userId && toolId) {
-        const consumeRes = await fetch("/api/tool/consume", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
+      // Step C: Consumption (SaaS Flow)
+      if (userId && toolId && finalPrompt) {
+        const consumeRes = await fetch('/api/tool/consume', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ userId, toolId })
         });
-        const consumeResult = await consumeRes.json();
-        if (consumeResult.success && consumeResult.data) {
-          setSaasUser(prev => prev ? { ...prev, integral: consumeResult.data.currentIntegral } : null);
+        const consumeJson = await consumeRes.json();
+        if (consumeJson.success) {
+          // Update local points
+          setUserInfo(prev => prev ? { ...prev, integral: consumeJson.data.currentIntegral } : null);
         }
       }
-
     } catch (err: any) {
       console.error(err);
-      setError("生成期间出现错误，请检查网络或刷新页面。");
+      setError("生成提示词失败，如果持续失败，请尝试刷新页面。");
     } finally {
       setIsLoading(false);
     }
@@ -190,27 +189,27 @@ export default function App() {
           <div className="w-8 h-8 bg-[#26A69A] rounded flex items-center justify-center">
             <div className="w-4 h-4 bg-white rounded-sm"></div>
           </div>
-          <span className="font-bold text-lg tracking-tight ml-2">电商生图应用提示词</span>
+          <span className="font-bold text-lg tracking-tight ml-2">电商生图提示词架构师</span>
         </div>
         
-        {/* User Stats Display */}
         <div className="flex items-center gap-4">
-          {saasUser && (
-            <div className="flex items-center gap-3">
-              <div className="flex items-center gap-1.5 bg-[#F1F5F9] px-3 py-1.5 rounded-lg border border-[#E2E8F0]">
-                <User className="w-3.5 h-3.5 text-slate-500" />
-                <span className="text-xs font-semibold text-slate-700">{saasUser.name}</span>
+          {userInfo ? (
+            <div className="flex items-center gap-4 animate-in fade-in slide-in-from-right-4 duration-500">
+              <div className="flex items-center bg-[#F1F5F9] px-3 py-1.5 rounded-lg gap-2 border border-[#E0E4E7]">
+                <User size={14} className="text-[#64748B]" />
+                <span className="text-sm font-medium text-[#475569]">{userInfo.name}</span>
               </div>
-              <div className="flex items-center gap-1.5 bg-[#FFF8E1] px-3 py-1.5 rounded-lg border border-[#FFE082]">
-                <Coins className="w-3.5 h-3.5 text-[#FBC02D]" />
-                <span className="text-xs font-bold text-[#F57F17]">{saasUser.integral} <span className="font-normal text-[0.65rem] opacity-70">积分</span></span>
+              <div className="flex items-center bg-[#FFFBEB] px-3 py-1.5 rounded-lg gap-2 border border-[#FEF3C7]">
+                <Coins size={14} className="text-[#D97706]" />
+                <span className="text-sm font-bold text-[#92400E]">{userInfo.integral}</span>
+                <span className="text-[10px] font-bold text-[#92400E]/70 uppercase">积分</span>
               </div>
             </div>
+          ) : (
+            <div className="bg-[#E0F2F1] text-[#00796B] px-3 py-1 rounded-full text-xs font-bold uppercase tracking-widest">
+              后端已激活
+            </div>
           )}
-          <div className="h-4 w-[1px] bg-slate-200 hidden md:block"></div>
-          <div className="bg-[#E0F2F1] text-[#00796B] px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest hidden md:block">
-            SaaS 系统对接中
-          </div>
         </div>
       </header>
 
@@ -251,9 +250,10 @@ export default function App() {
 
           <div className="mt-6 flex flex-col gap-3">
              {error && (
-              <p className="text-red-500 text-xs px-2">
+              <div className="bg-red-50 border border-red-100 rounded-lg p-3 text-red-600 text-sm flex items-start gap-2">
+                <span className="bg-red-200 text-red-700 rounded-full w-4 h-4 flex items-center justify-center text-[10px] font-bold shrink-0 mt-0.5">!</span>
                 {error}
-              </p>
+              </div>
             )}
             <button
               onClick={handleGenerate}

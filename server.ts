@@ -14,15 +14,15 @@ async function startServer() {
     const targetUrl = `http://aibigtree.com${targetPath}`;
     try {
       const response = await axios({
-        method: "POST",
+        method: req.method,
         url: targetUrl,
         data: req.body,
         headers: { 'Content-Type': 'application/json' }
       });
       res.status(response.status).json(response.data);
     } catch (error: any) {
-      console.error(`Proxy error for ${targetPath}:`, error.message);
-      res.status(error.response?.status || 500).json(error.response?.data || { error: "代理转发失败" });
+      console.error(`SaaS Proxy Error (${targetPath}):`, error.message);
+      res.status(500).json({ error: "代理转发失败", message: error.message });
     }
   };
 
