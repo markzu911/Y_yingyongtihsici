@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { Loader2, Sparkles, Send, Copy, Check, User, Coins } from 'lucide-react';
-import { GoogleGenAI } from '@google/genai';
 
 const SYSTEM_INSTRUCTION = `你要扮演一位顶级的AI Prompt工程师。你的任务是专门并且仅仅为【电商图像生成类、商品视觉展示类、模特换装渲染类】的应用或Agent编写提示词。
 
@@ -136,21 +135,41 @@ export default function App() {
         }
       }
 
-      // Step B: AI Generation (Existing Logic)
-      const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
-      const responseStream = await ai.models.generateContentStream({
-        model: "gemini-3.1-pro-preview",
-        contents: `用户想要做的应用/Agent想法是：${idea}`,
-        config: {
-          systemInstruction: SYSTEM_INSTRUCTION,
-        }
+      // Step B: AI Generation (Requesting backend proxy)
+      const response = await fetch("/api/gemini", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model: "gemini-1.5-flash", // Using target model requested
+          payload: {
+            contents: [{ role: "user", parts: [{ text: `用户想要做的应用/Agent想法是：${idea}` }] }],
+            generationConfig: {
+              systemInstruction: SYSTEM_INSTRUCTION,
+            }
+          }
+        })
       });
-      
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || "后端生成请求失败");
+      }
+
+      if (!response.body) {
+        throw new Error("无法读取响应流");
+      }
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
       let finalPrompt = "";
-      for await (const chunk of responseStream) {
-        const text = chunk.text || "";
-        finalPrompt += text;
-        setGeneratedPrompt((prev) => prev + text);
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        
+        const chunk = decoder.decode(value, { stream: true });
+        finalPrompt += chunk;
+        setGeneratedPrompt((prev) => prev + chunk);
       }
 
       // Step C: Consumption (SaaS Flow)
