@@ -42,6 +42,6 @@
     @apply italic;
   }
   .markdown-body blockquote {
-    @apply border-l-4 border-[#B2DFDB] pl-4 italic text-[#34495E] my-4;
+    @apply border-l-4 border-blue-500 pl-4 italic text-slate-600 my-4;
   }
 }

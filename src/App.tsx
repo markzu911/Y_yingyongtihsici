@@ -182,12 +182,12 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-[#F8FAF9] text-[#2C3E50] antialiased font-sans flex flex-col">
+    <div className="min-h-screen bg-[#F1F5F9] text-[#2C3E50] antialiased font-sans flex flex-col">
       {/* Header */}
-      <header className="h-16 bg-white border-b border-[#E0E4E7] flex items-center justify-between px-6 lg:px-8 flex-shrink-0">
+      <header className="h-16 bg-white border-b border-[#E2E8F0] flex items-center justify-between px-6 lg:px-8 flex-shrink-0 shadow-sm">
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 bg-[#26A69A] rounded flex items-center justify-center">
-            <div className="w-4 h-4 bg-white rounded-sm"></div>
+          <div className="w-8 h-8 bg-slate-800 rounded flex items-center justify-center">
+            <div className="w-4 h-4 bg-blue-500 rounded-sm italic font-bold text-[8px] flex items-center justify-center text-white">AI</div>
           </div>
           <span className="font-bold text-lg tracking-tight ml-2">电商生图提示词架构师</span>
         </div>
@@ -195,9 +195,9 @@ export default function App() {
         <div className="flex items-center gap-4">
           {userInfo ? (
             <div className="flex items-center gap-4 animate-in fade-in slide-in-from-right-4 duration-500">
-              <div className="flex items-center bg-[#F1F5F9] px-3 py-1.5 rounded-lg gap-2 border border-[#E0E4E7]">
-                <User size={14} className="text-[#64748B]" />
-                <span className="text-sm font-medium text-[#475569]">{userInfo.name}</span>
+              <div className="flex items-center bg-slate-50 px-3 py-1.5 rounded-lg gap-2 border border-slate-200">
+                <User size={14} className="text-slate-500" />
+                <span className="text-sm font-medium text-slate-600">{userInfo.name}</span>
               </div>
               <div className="flex items-center bg-[#FFFBEB] px-3 py-1.5 rounded-lg gap-2 border border-[#FEF3C7]">
                 <Coins size={14} className="text-[#D97706]" />
@@ -206,7 +206,7 @@ export default function App() {
               </div>
             </div>
           ) : (
-            <div className="bg-[#E0F2F1] text-[#00796B] px-3 py-1 rounded-full text-xs font-bold uppercase tracking-widest">
+            <div className="bg-slate-200 text-slate-700 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-widest">
               后端已激活
             </div>
           )}
@@ -216,20 +216,20 @@ export default function App() {
       {/* Main Container */}
       <div className="flex-1 flex flex-col gap-6 p-6 overflow-y-auto max-w-4xl mx-auto w-full">
         {/* Top Panel: Input Area */}
-        <main className="bg-white border border-[#E0E4E7] rounded-xl p-6 shadow-[0_2px_4px_rgba(0,0,0,0.02)] flex flex-col shrink-0">
+        <main className="bg-white border border-slate-200 rounded-xl p-6 shadow-sm flex flex-col shrink-0">
           <div className="mb-6">
             <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">智能体角色定义</h3>
-            <div className="flex items-center gap-3 p-3 bg-[#F1F5F9] rounded-lg">
-              <div className="w-12 h-12 bg-[#B2DFDB] text-[#00796B] rounded-full flex items-center justify-center font-bold text-lg shrink-0">
+            <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-lg border border-slate-100">
+              <div className="w-12 h-12 bg-slate-700 text-white rounded-full flex items-center justify-center font-bold text-lg shrink-0">
                 PA
               </div>
               <div>
-                <div className="font-bold text-sm text-[#2C3E50]">电商视觉架构专家</div>
-                <div className="text-xs text-slate-500">仅支持电商/换装生图场景</div>
+                <div className="font-bold text-sm text-slate-800">电商视觉架构专家</div>
+                <div className="text-xs text-slate-400">仅支持电商/换装生图场景</div>
               </div>
             </div>
             
-            <div className="mt-4 p-3 bg-[#E0F2F1] rounded-lg text-xs text-[#00796B] leading-relaxed">
+            <div className="mt-4 p-3 bg-blue-50 rounded-lg text-xs text-blue-700 border border-blue-100 leading-relaxed">
               <span className="font-bold">专家提示：</span> 描述您想要构建的<span className="font-bold underline underline-offset-2">电商图像生成</span>应用的核心功能与目标场景（例如：模特换装、商品融合），AI 将为您精心打造一份专业且高转化率的系统级提示词。非电商生图需求将被拒绝。
             </div>
           </div>
@@ -243,7 +243,7 @@ export default function App() {
                 value={idea}
                 onChange={(e) => setIdea(e.target.value)}
                 placeholder="描述你想让 Agent 实现的电商图像生成功能... 例如：我想构建一个淘宝女装模特自动换装试衣的AI，支持选光线和姿态。"
-                className="w-full min-h-[160px] p-4 text-[0.95rem] bg-white border-[1.5px] border-[#E0E4E7] rounded-lg resize-none outline-none focus:border-[#26A69A] transition-colors"
+                className="w-full min-h-[160px] p-4 text-[0.95rem] bg-white border-[1.5px] border-slate-200 rounded-lg resize-none outline-none focus:border-blue-600 transition-colors"
               />
             </div>
           </div>
@@ -258,7 +258,7 @@ export default function App() {
             <button
               onClick={handleGenerate}
               disabled={isLoading || !idea.trim()}
-              className="group relative w-full flex items-center justify-center gap-2 bg-[#26A69A] text-white px-6 py-4 rounded-lg font-bold tracking-wide transition-all hover:bg-[#208d83] disabled:opacity-50 disabled:cursor-not-allowed text-lg"
+              className="group relative w-full flex items-center justify-center gap-2 bg-blue-600 text-white px-6 py-4 rounded-lg font-bold tracking-wide transition-all hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-lg shadow-lg shadow-blue-200"
             >
               {isLoading ? (
                  <>
@@ -275,7 +275,7 @@ export default function App() {
         </main>
 
         {/* Bottom Panel: Output Area */}
-        <aside className="bg-white border border-[#E0E4E7] rounded-xl p-6 shadow-[0_2px_4px_rgba(0,0,0,0.02)] flex flex-col min-h-[400px]">
+        <aside className="bg-white border border-slate-200 rounded-xl p-6 shadow-sm flex flex-col min-h-[400px]">
            <div className="flex justify-between items-center mb-4">
              <label className="text-xs font-bold text-slate-500 uppercase">
                2. 生成的系统提示词
@@ -283,7 +283,7 @@ export default function App() {
              {generatedPrompt && (
                <button
                  onClick={handleCopy}
-                 className="flex items-center text-xs text-[#00796B] hover:text-[#005A4E] transition-colors"
+                 className="flex items-center text-xs text-blue-600 hover:text-blue-800 transition-colors font-bold"
                  title="一键复制"
                >
                  {isCopied ? (
@@ -300,18 +300,18 @@ export default function App() {
            </div>
 
            {generatedPrompt ? (
-             <div className="flex-1 bg-[#FDFCFB] border-[1.5px] border-dashed border-[#B2DFDB] rounded-lg p-5 overflow-y-auto">
-               <div className="markdown-body font-sans text-[#2C3E50]">
+             <div className="flex-1 bg-slate-50/50 border-[1.5px] border-dashed border-blue-200 rounded-lg p-5 overflow-y-auto">
+               <div className="markdown-body font-sans text-slate-700">
                  <ReactMarkdown>{generatedPrompt}</ReactMarkdown>
                </div>
              </div>
            ) : (
-              <div className="flex-1 bg-[#FDFCFB] border-[1.5px] border-dashed border-[#B2DFDB] rounded-lg p-5 flex flex-col items-center justify-center text-center opacity-70">
-                 <div className="w-16 h-16 bg-[#E0F2F1] rounded-full flex items-center justify-center mb-4 text-[#00796B]">
+              <div className="flex-1 bg-slate-50/50 border-[1.5px] border-dashed border-slate-200 rounded-lg p-5 flex flex-col items-center justify-center text-center opacity-70">
+                 <div className="w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center mb-4 text-blue-600">
                     <Sparkles className="w-6 h-6" />
                  </div>
-                 <p className="text-sm font-bold text-[#00796B]">等待灵感唤醒...</p>
-                 <p className="text-xs text-slate-500 mt-2">在上方填入电商/商品渲染相关的创意即可自动生成模板。</p>
+                 <p className="text-sm font-bold text-blue-700">等待灵感唤醒...</p>
+                 <p className="text-xs text-slate-400 mt-2">在上方填入电商/商品渲染相关的创意即可自动生成模板。</p>
               </div>
            )}
         </aside>
