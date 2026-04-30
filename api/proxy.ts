@@ -1,9 +1,15 @@
 import express from "express";
 import axios from "axios";
 import { GoogleGenAI } from "@google/genai";
+import dotenv from "dotenv";
+
+// Load environment variables
+dotenv.config();
 
 const app = express();
 app.use(express.json({ limit: '10mb' }));
+
+// ... CORS Support stays the same ...
 
 // CORS Support
 app.use((req, res, next) => {
@@ -44,16 +50,19 @@ app.post("/api/tool/consume", (req, res) => proxyRequest(req, res, "/api/tool/co
 app.post("/api/gemini", async (req, res) => {
   try {
     const { model, payload } = req.body;
-    const key = process.env.GEMINI_API_KEY;
+    const key = process.env.GEMINI_API_KEY?.trim();
 
     if (!key) {
       return res.status(500).json({ error: "GEMINI_API_KEY is not configured on the server." });
     }
 
     const ai = new GoogleGenAI({ apiKey: key });
-    // Using (ai as any).models to bypass TS error if the SDK types are out of sync with the runtime.
+    
+    // Use the requested model or default to the recommended flash model
+    const selectedModel = model || "gemini-3-flash-preview";
+
     const result = await (ai as any).models.generateContentStream({
-      model: model || "gemini-1.5-flash",
+      model: selectedModel,
       contents: payload.contents,
       config: payload.generationConfig || {}
     });

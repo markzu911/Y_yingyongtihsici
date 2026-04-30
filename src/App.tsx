@@ -140,7 +140,7 @@ export default function App() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          model: "gemini-1.5-flash",
+          model: "gemini-3-flash-preview",
           payload: {
             contents: [{ role: "user", parts: [{ text: `用户想要做的应用/Agent想法是：${idea}` }] }],
             generationConfig: {
