@@ -139,7 +139,7 @@ export default function App() {
       // Step B: AI Generation (Direct Connect)
       const genAI = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || "" });
       const result = await genAI.models.generateContentStream({
-        model: "gemini-1.5-flash",
+        model: "gemini-3.1-pro-preview",
         contents: [{ role: "user", parts: [{ text: `用户想要做的应用/Agent想法是：${idea}` }] }],
         config: {
           systemInstruction: SYSTEM_INSTRUCTION
