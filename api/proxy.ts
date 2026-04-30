@@ -51,7 +51,8 @@ app.post("/api/gemini", async (req, res) => {
     }
 
     const ai = new GoogleGenAI({ apiKey: key });
-    const result = await ai.models.generateContentStream({
+    // Using (ai as any).models to bypass TS error if the SDK types are out of sync with the runtime.
+    const result = await (ai as any).models.generateContentStream({
       model: model || "gemini-1.5-flash",
       contents: payload.contents,
       config: payload.generationConfig || {}
